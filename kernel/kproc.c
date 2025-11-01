@@ -86,9 +86,9 @@ struct process *kproc_create(uint32_t *elf_file)
     proc_array[i].trapframe->epc         = eh->entry;
 
 
-    for(int i = 0; i < eh->phnum; i++)
+    for(int hi = 0; hi < eh->phnum; hi++)
     {
-        struct elf_program_header *eph = (struct elf_program_header *)((uint32_t)eh + eh->phoff + i*sizeof(struct elf_program_header));
+        struct elf_program_header *eph = (struct elf_program_header *)((uint32_t)eh + eh->phoff + hi*sizeof(struct elf_program_header));
         elf_dump_program_header(eph);
 
         uint32_t program_start = (uint32_t)elf_file + (uint32_t)eph->offset;
@@ -368,7 +368,7 @@ uint32_t kproc_exec(char *path, char **argv)
         arg_len++; // for '\0'
         physical_user_stack -= arg_len;
         current_user_process->trapframe->sp -= arg_len;
-        tmp_argv[i] = current_user_process->trapframe->sp;
+        tmp_argv[i] = (char*)current_user_process->trapframe->sp;
         memcpy((void*)physical_user_stack, (void*)argv[i], arg_len);
     }
 
@@ -408,7 +408,7 @@ uint32_t kproc_add_page()
 {
     void * page = kmem_alloc();
     uint32_t retval = current_user_process->free_heap_page;
-    kvmem_map_page(current_user_process->pagetable, current_user_process->free_heap_page, page, PTE_R | PTE_W | PTE_U);
+    kvmem_map_page(current_user_process->pagetable, current_user_process->free_heap_page, (uint32_t)page, PTE_R | PTE_W | PTE_U);
     current_user_process->free_heap_page += PAGE_SIZE;
     
     return retval;

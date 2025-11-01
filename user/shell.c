@@ -37,7 +37,7 @@ void main(void)
         /* if buffer has at leas one valid character and parsed buffer has at least one valid element */
         if( (usys_read(0, (uint8_t *)buf, BUF_SIZE - 1) > 0) && (parse_buf() > 0) )
         {
-            char **iter = current_cmd.argv;
+            //char **iter = current_cmd.argv;
 
             if(usys_fork() == 0)
             {

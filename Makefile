@@ -7,10 +7,19 @@ OBJCOPY = riscv64-unknown-elf-objcopy
 OBJDUMP = riscv64-unknown-elf-objdump
 
 
-CFLAGS = -Wall -Wno-address-of-packed-member -O0 -fno-omit-frame-pointer -ggdb
-CFLAGS += -nostdlib
+CFLAGS = -Wall -Werror -Wno-address-of-packed-member -Wno-unknown-attributes -O0 -fno-omit-frame-pointer -fno-stack-protector -ggdb -MD
+# CFLAGS = -Wall -O0 -fno-omit-frame-pointer
+CFLAGS += -march=rv32im_zicsr -mabi=ilp32
+CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding
-CFLAGS += -march=rv32im -mabi=ilp32
+CFLAGS += -fno-common -nostdlib
+CFLAGS += -fno-builtin-strncpy -fno-builtin-strncmp -fno-builtin-strlen -fno-builtin-memset
+CFLAGS += -fno-builtin-memmove -fno-builtin-memcmp -fno-builtin-log -fno-builtin-bzero
+CFLAGS += -fno-builtin-strchr -fno-builtin-exit -fno-builtin-malloc -fno-builtin-putc
+CFLAGS += -fno-builtin-free
+CFLAGS += -fno-builtin-memcpy -Wno-main
+CFLAGS += -fno-builtin-printf -fno-builtin-fprintf -fno-builtin-vprintf
+CFLAGS += -fno-pie -no-pie
 
 kernel.elf: entry.o kernelvec.o uservec.o swtch.o
 	$(CC) $(CFLAGS) -Wl,-Tkernel/kernel.ld -Wl,-Map=kernel.map -o kernel.elf \
@@ -18,16 +27,16 @@ kernel.elf: entry.o kernelvec.o uservec.o swtch.o
 	entry.o kernelvec.o uservec.o swtch.o
 
 entry.o:
-	$(AS) -march=rv32im -mabi=ilp32 kernel/entry.S -o entry.o
+	$(AS) -march=rv32im_zicsr  -mabi=ilp32 kernel/entry.S -o entry.o
 
 kernelvec.o:
-	$(AS) -march=rv32im -mabi=ilp32 kernel/kernelvec.S -o kernelvec.o
+	$(AS) -march=rv32im_zicsr  -mabi=ilp32 kernel/kernelvec.S -o kernelvec.o
 
 uservec.o:
-	$(AS) -march=rv32im -mabi=ilp32 kernel/uservec.S -o uservec.o
+	$(AS) -march=rv32im_zicsr  -mabi=ilp32 kernel/uservec.S -o uservec.o
 
 swtch.o:
-	$(AS) -march=rv32im -mabi=ilp32 kernel/swtch.S -o swtch.o
+	$(AS) -march=rv32im_zicsr  -mabi=ilp32 kernel/swtch.S -o swtch.o
 	
 run: kernel.elf entry.o kernelvec.o
 	$(QEMU) -machine virt -smp 1 -bios none -nographic -serial mon:stdio --no-reboot \
@@ -51,7 +60,7 @@ umalloc.o:
 	$(CC) $(CFLAGS) -c user/umalloc.c -o umalloc.o
 
 usyscall.o:
-	$(AS) -march=rv32im -mabi=ilp32 user/usyscall.S -o usyscall.o
+	$(AS) -march=rv32im_zicsr  -mabi=ilp32 user/usyscall.S -o usyscall.o
 
 ulibc.o:
 	$(CC) $(CFLAGS) -c user/ulibc.c -o ulibc.o

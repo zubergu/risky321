@@ -10,6 +10,8 @@ struct malloc_header head;
    ignore size and free for now
 */
 
+void dump_malloc_list();
+
 void * umalloc(uint32_t bytes)
 {               
     /* chunk of free memory must fit requested number of bytes + header for remainder */
