@@ -9,6 +9,7 @@
 #include "kproc.h"
 #include "virtio.h"
 #include "filesystem.h"
+#include "plic.h"
 
 struct process * shell_proc;
 //struct process * shell_proc2;
@@ -17,12 +18,12 @@ extern struct filesystem_file filesystem_files[MAX_FS_FILES];
 
 
 /* entry point for kernel in supervisor mode */
-void kernel_main()
+void
+kernel_main()
 {
     /* Give supervisor mode access to memory at addresses paged for User Mode */
     uint32_t sstatus = READ_CSR("sstatus");
     WRITE_CSR("sstatus", sstatus | SSTATUS_SUM);
-
 
     /* initialize UART for I/O */
 	uart_init();
@@ -39,6 +40,10 @@ void kernel_main()
     /* initialize kernel trap handling */
     ktrap_init();
 
+    /* initialize PLIC for external interrupts from devices */
+    PlicInit();
+    PlicInitHart();
+
     /* initialize process control blocks */
     kproc_init();
 
@@ -47,6 +52,12 @@ void kernel_main()
 
     /* initialize filesystem */
     filesystem_init();
+
+    //for(;;)
+    //{
+        //kprintf("Stuck at s-mode\n");
+    //    delay();
+    //}
 
     shell_proc =  kproc_create((uint32_t *)(&filesystem_files[2].data[0]));
     //shell_proc2 = kproc_create((uint32_t *)(&files[2].data[0]), files[2].size);

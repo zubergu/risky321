@@ -1,5 +1,7 @@
 #include "csr.h"
 #include "uart.h"
+#include "kprintf.h"
+#include "system.h"
 
 void start_setup();
 
@@ -34,7 +36,7 @@ void start_setup()
 	WRITE_CSR("medeleg", 0xFFFFFFFF);
 	WRITE_CSR("mideleg", 0xFFFFFFFF);
 
-	/* Supervisor external, timer and software Interrupt ENABLE*/
+	/* Supervisor external, timer and software Interrupt ENABLE */
 	WRITE_CSR("sie", READ_CSR("sie") | SIE_SEIE | SIE_SSIE | SIE_STIE);
 
 	/* address to jump to mret => going from machine to supervisor mode at the end */
@@ -43,7 +45,17 @@ void start_setup()
 	/* initially disable paging in supervisor mode */
 	WRITE_CSR("satp", 0);
 
-	/* TODO: Setup timers */
+	/* SETUP TIMER INTERRUPTS
+	WRITE_CSR("mie", READ_CSR("mie") | MIE_STIE);
+	WRITE_CSR("menvcfg", READ_CSR("menvcfg") |(((uint64_t)1) << 63));
+	WRITE_CSR("mcounteren", READ_CSR("mcounteren") | 2);
+	WRITE_CSR("stimecmp", READ_CSR("time") + 1000000);
+
+	
+	*/
+	curr_mstatus = READ_CSR("mstatus");
+	WRITE_CSR("mstatus", curr_mstatus | MSTATUS_SIE);
+
 	/* TODO: handle multiple HARTs */
 
 	/* jump to kernel_main in supervisor mode */

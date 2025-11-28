@@ -28,14 +28,30 @@ void main(void)
     buf[BUF_SIZE - 1] = '\0';
     current_cmd.argv[MAX_CMD_ARGS] = NULL;
 
-
     uprintf("Hello from Risky Shell!\n");
 
     for(;;)
     {
         uprintf(prompt, current_directory);
         /* if buffer has at leas one valid character and parsed buffer has at least one valid element */
-        if( (usys_read(0, (uint8_t *)buf, BUF_SIZE - 1) > 0) && (parse_buf() > 0) )
+        int i = 0;
+        int c = 0;
+        while(i < BUF_SIZE)
+        {
+            if(usys_read(0, (uint8_t*)&c, 1))
+            {
+                buf[i] = c;
+                if(c == '\n')
+                {
+                    buf[i] = '\0';
+                    break;
+                }
+
+                i++;
+            }
+        }
+
+        if(parse_buf() > 0 )
         {
             //char **iter = current_cmd.argv;
 
@@ -54,7 +70,8 @@ void main(void)
     
 }
 
-static uint32_t parse_buf()
+static uint32_t
+parse_buf()
 {
     current_cmd.argc = 0;
     uint32_t argc = 0;

@@ -39,7 +39,7 @@ static void print_dec(int val, bool isSigned)
     /* send characters from array to uart in reverse order, right to left*/
     while(i>=0)
     {
-        uart_putc_block(str[i]);
+        UartSendBlocking(str[i]);
         i--;
     }
 
@@ -48,12 +48,12 @@ static void print_dec(int val, bool isSigned)
 /* support function to print hexadecimal representation of uint32_t and pointer(addr_t) */
 static void print_hex(uint32_t val)
 {
-    uart_putc_block('0');
-    uart_putc_block('x');
+    UartSendBlocking('0');
+    UartSendBlocking('x');
     
     for(int i = 7; i >=0; i--)
     {
-        uart_putc_block(hex_lookup[(val >> i*4) & 0x0F]);
+        UartSendBlocking(hex_lookup[(val >> i*4) & 0x0F]);
     }
 }
 
@@ -73,16 +73,16 @@ int kprintf(const char * format, ...)
             switch(*format)
             {
                 case '\0':
-                    uart_putc_block('%');
+                    UartSendBlocking('%');
                     va_end(arguments);
                     return 0;
                 case '%':
-                    uart_putc_block('%');
+                    UartSendBlocking('%');
                     break;
                 case 'c':
                     {
                         int val = va_arg(arguments, int);
-                        uart_putc_block(val);
+                        UartSendBlocking(val);
                         break;
                     }
                 case 'd':
@@ -114,7 +114,7 @@ int kprintf(const char * format, ...)
                         const char * str = va_arg(arguments, const char *);
                         while(*str)
                         {
-                            uart_putc_block(*str);
+                            UartSendBlocking(*str);
                             str++;
                         }
                         break;
@@ -127,7 +127,7 @@ int kprintf(const char * format, ...)
         }
         else
         {
-            uart_putc_block(*format);
+            UartSendBlocking(*format);
         }
 
         /* go to next character in format */

@@ -1,6 +1,7 @@
 #include "system.h"
 #include "kprintf.h"
 
+
 void kpanic(char *filename, size_t line, char *message)
 {
     kprintf("KERNEL PANIC! %s\t%s::%d\n", message, filename, line);

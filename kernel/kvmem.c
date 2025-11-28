@@ -12,7 +12,8 @@ uint32_t *kernel_pagetable = NULL;
 
 
 /* turn on memory paging in CPU */
-void kvmem_init_hart()
+void
+kvmem_init_hart()
 {
     uint32_t value = SATP_SV32 | ((uint32_t)kernel_pagetable >> 12);
 
@@ -21,7 +22,8 @@ void kvmem_init_hart()
     __asm__ __volatile__("sfence.vma");
 }
 
-void kvmem_init_kernel()
+void
+kvmem_init_kernel()
 {
     kernel_pagetable = kmem_alloc();
 
@@ -31,7 +33,8 @@ void kvmem_init_kernel()
     }
 }
 
-void kvmem_map_page(uint32_t *table, uint32_t va, uint32_t pa, uint32_t flags)
+void
+kvmem_map_page(uint32_t *table, uint32_t va, uint32_t pa, uint32_t flags)
 {
     /*
      * TODO: add checks for page alignment in memory 
@@ -52,7 +55,8 @@ void kvmem_map_page(uint32_t *table, uint32_t va, uint32_t pa, uint32_t flags)
     table0[vpn0] = (table0[vpn0] >> 2) | flags | PTE_V; /* store remaining 20 bits on 22 bit space + 10 bit flags*/
 }
 
-uint32_t * kvmem_copy_pagetable(uint32_t *src_page)
+uint32_t* 
+kvmem_copy_pagetable(uint32_t *src_page)
 {
     uint32_t *dest_page = kmem_alloc(); 
     for(int i = 0; i < 1024; i++)
@@ -92,7 +96,8 @@ uint32_t * kvmem_copy_pagetable(uint32_t *src_page)
     return dest_page;
 }
 
-void * kvmem_get_pa(uint32_t *pagetable, uint32_t va)
+void* 
+kvmem_get_pa(uint32_t *pagetable, uint32_t va)
 {
     uint32_t vpn1 = (va >> 22) & 0x3FF;  /* first index  */
     uint32_t vpn0 = (va >> 12) & 0x3FF;  /* second index */

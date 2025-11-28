@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#define KernelPanic(message) kpanic(__FILE_NAME__, __LINE__, (message))
+
 void kpanic(char *filename, size_t line, char *message);
 void delay(void);
 

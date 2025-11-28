@@ -2,6 +2,7 @@
 #include "kprintf.h"
 #include "kproc.h"
 #include "kterminal.h"
+#include "tty.h"
 
 uint32_t ksys_fork()
 {
@@ -12,7 +13,8 @@ uint32_t ksys_read(int fd, uint8_t *buf, uint32_t size)
 {
     if(fd == 0)
     {
-        return kterminal_readline_block((char *)buf, size);
+        return TtyRead(buf, size);
+        //return kterminal_readline_block((char *)buf, size);
     }
 
     if(fd == 1 || fd == 2)
@@ -36,10 +38,7 @@ uint32_t ksys_write(int fd, uint8_t *data, uint32_t size)
 {
     if(fd == 1)
     {
-        for(uint32_t i = 0; i < size; i++)
-        {
-            kprintf("%c", (char)(data[i]));
-        }
+        TtyWrite(data, size);
         
         return 0;
     }

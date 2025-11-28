@@ -5,6 +5,7 @@
 #include "kvmem.h"
 
 #define VIRTIO_BLK_PADDR 0x10001000 // BASE PHYSICAL ADDRESS OF VIRTIO MMIO BLOCK
+#define VIRTIO_IRQ 1
 
 #define SECTOR_SIZE        512
 #define VIRTIO_DEVICE_BLK    2

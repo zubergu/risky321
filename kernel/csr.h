@@ -35,6 +35,7 @@
 
 /* MASKS TO SET BIT FIELDS IN MSTATUS REGISTER */
 #define MSTATUS_MPP_S    (0x1 << 11) /* MSTATUS:MPP = S(UPERVISOR) */
+#define MSTATUS_SIE      (0x1 << 1)  /* MSTATUS:SIE = 1 */
 
 
 /* ###   SSTATUS   ### */
@@ -48,7 +49,10 @@
 /* MASKS TO SET BIT FIELDS IN SIE REGISTER */
 #define SIE_SEIE       (0x1) << 9 /* SEIE: Supervisor External Interrupt Enable */
 #define SIE_STIE       (0x1) << 5 /* STIE: Supervisor Timer    Interrupt Enable */
-#define SIE_SSIE       (0x1) << 1 /* SSIE: Supervisor Software Interrupt Enable*/
+#define SIE_SSIE       (0x1) << 1 /* SSIE: Supervisor Software Interrupt Enable */
+
+/* MASKS TO SET BIT FIELDS IN MIE REGISTER */
+#define MIE_STIE       (0x1) << 5 /* STIE: Supervisor Timer  Interrupt Enable */
 
 
 /* ###  SATP  ### */

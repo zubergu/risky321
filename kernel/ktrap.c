@@ -4,6 +4,8 @@
 #include "kprintf.h"
 #include "ksyscall.h"
 #include "kproc.h"
+#include "plic.h"
+#include "uart.h"
 
 /* from kproc.c */
 /* variables that hold process information */
@@ -17,14 +19,21 @@ extern void kernelvec();
 extern void uservec(void);
 extern void enter_user_process(uint32_t pagetable);
 
-void ktrap_init()
+
+/* static functions */
+static int KtrapInterruptHandle(uint32_t type, uint8_t fromUserMode);
+
+
+void
+ktrap_init()
 {
     /* kernelvec is a subroutine written in assembly in kernelvec.S*/
     WRITE_CSR("stvec", (uint32_t) kernelvec);
 }
 
 
-void ktrap_from_user_handler(void)
+void
+ktrap_from_user_handler(void)
 {
     /* we came here from uservec, user registers were saved there */
     /* we are in supervisor mode but...*/
@@ -33,6 +42,7 @@ void ktrap_from_user_handler(void)
     //uint32_t stval  = READ_CSR("stval");
     uint32_t sepc   = READ_CSR("sepc");
     uint32_t sstatus = READ_CSR("sstatus");
+    uint32_t trapType = 0x7FFFFFFF & scause;
 
     uint32_t retval = 0;
 
@@ -113,16 +123,25 @@ void ktrap_from_user_handler(void)
                         break;
                 }
                 break;
-            
+            case SCAUSE_IACCESS_FAULT:
+                {
+                    kpanic(__FILE__, __LINE__, "INSTRUCTION ACCESS FAULT Exception");
+                }
+                break;
+            case SCAUSE_ILLEGAL_INSTR:
+                {
+                    kpanic(__FILE__, __LINE__, "ILLEGAL INSTRUCTION Exception");
+                }
+                break;
             default:
                 kpanic(__FILE__, __LINE__, "unhandled exception code");
                 break;
         }
 
     }
-    else
+    else /* interrupt */
     {
-        kpanic(__FILE__, __LINE__, "unhandled interrupt in user trap handler");
+        KtrapInterruptHandle(trapType, TRUE);
     }
 
     ktrap_to_user();
@@ -131,7 +150,8 @@ void ktrap_from_user_handler(void)
 /* Called at the end of user trap handler OR at initial start of process */
 /* prepare trapframe and all system registers before */
 /* */
-void ktrap_to_user(void)
+void
+ktrap_to_user(void)
 {
     uint32_t sstatus = READ_CSR("sstatus");
 
@@ -158,24 +178,22 @@ void ktrap_to_user(void)
     /* argument to this function is correct content of satp register */
     /* for user process that is about to be run*/
     enter_user_process(SATP_SV32 | ((uint32_t)current_user_process->pagetable) >> 12);
-
 }
 
 /* handle traps that originate from execution in supervisor mode */
 /* we jump here from KERNELVEC in kernelvec.S */
-void ktrap_from_supervisor_handler()
+void
+ktrap_from_supervisor_handler()
 {
-    
     uint32_t scause = READ_CSR("scause");
     uint32_t stval  = READ_CSR("stval");
     uint32_t sepc   = READ_CSR("sepc");
     uint32_t sstatus = READ_CSR("sstatus");
 
+    uint32_t trapType = 0x7FFFFFFF & scause;
+
     bool from_kernel  = (sstatus & SSTATUS_SPP_MASK) == SSTATUS_SPP_S;
     bool is_exception = (scause & SCAUSE_INTR_BIT) == 0;
-    
-    kprintf("sstatus=%x, scause=%x, stval=%x, sepc=%x\n", sstatus, scause, stval, sepc);
-
 
     if(!from_kernel)
     {
@@ -187,8 +205,11 @@ void ktrap_from_supervisor_handler()
     {
         kpanic(__FILE__, __LINE__, "Exception from kernel mode happened");
     }
-
-    kpanic(__FILE__, __LINE__, "Interrupts in kernel are not handled yet");
+    else /* interrupt */
+    {
+        int irq = KtrapInterruptHandle(trapType, FALSE);
+        PlicComplete(irq);
+    }
     
     /* at the end of this function we would simply return to where we were called */
     /* that is kernelvec in kernelvec.S */
@@ -197,7 +218,45 @@ void ktrap_from_supervisor_handler()
     /* so unless we change that, we will be switching from kernel to kernel execution */
 }
 
-void kdump_trapframe(struct trap_frame *frame)
+
+static int
+KtrapInterruptHandle(uint32_t type, uint8_t fromUserMode)
+{
+    switch(type)
+    {
+        case SCAUSE_SMODE_EXTERNAL_INTR:
+            {
+                int irq = PlicClaim();
+                if(irq == UART0_IRQ)
+                {
+                    UartInterruptHandle();
+                    PlicComplete(irq);
+                    return irq;
+                }
+                KernelPanic("Unhandled S-Mode external interrupt in  mode\n");
+            }
+            break;
+        case SCAUSE_SMODE_TIMER_INTR:
+            {
+                KernelPanic("Unhandled S-Mode timer interrupt in  mode\n");
+            }
+            break;
+        case SCAUSE_SMODE_SOFTWARE_INTR:
+            {
+                KernelPanic("Unhandled S-Mode software interrupt in %s mode\n");
+            }
+            break;
+        default:
+            {
+                KernelPanic("Unhandled interrupt in %s mode\n");
+            }
+    }
+
+    return 0;
+}
+
+void
+kdump_trapframe(struct trap_frame *frame)
 {
     kprintf("TRAP FRAME:\n");
     kprintf("ra=%x\n", frame->ra);

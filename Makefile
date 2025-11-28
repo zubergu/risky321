@@ -53,7 +53,9 @@ file_disk.tar: shell.elf echo.elf
 
 kernel_with_apps.elf: entry.o kernelvec.o uservec.o swtch.o file_disk.tar
 	$(CC) $(CFLAGS) -Wl,-Tkernel/kernel.ld -Wl,-Map=kernel.map -o kernel_with_apps.elf \
-	kernel/start.c kernel/uart.c kernel/kernel.c kernel/kprintf.c kernel/klibc.c kernel/system.c kernel/ktrap.c  kernel/kmem.c kernel/kvmem.c kernel/kproc.c kernel/ksyscall.c kernel/virtio.c kernel/filesystem.c kernel/elf.c kernel/kterminal.c \
+	kernel/start.c kernel/uart.c kernel/kernel.c kernel/kprintf.c kernel/klibc.c kernel/system.c \
+	kernel/ktrap.c  kernel/kmem.c kernel/kvmem.c kernel/kproc.c kernel/ksyscall.c kernel/virtio.c \
+	kernel/filesystem.c kernel/elf.c kernel/kterminal.c kernel/plic.c kernel/tty.c \
 	entry.o kernelvec.o uservec.o swtch.o
 
 umalloc.o:
